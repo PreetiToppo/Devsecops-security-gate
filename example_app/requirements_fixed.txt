@@ -1,0 +1,9 @@
+# ✅ Patched versions — all known CVEs resolved
+fastapi==0.110.0
+requests==2.31.0
+cryptography==41.0.7
+Pillow==10.2.0
+urllib3==2.1.0
+pyjwt==2.8.0
+sqlalchemy==2.0.25
+passlib[bcrypt]==1.7.4
